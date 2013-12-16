@@ -6,8 +6,10 @@ import random
 import time
 import team
 import plays
+import data_ops
+import learn
+import sys
 
-       
 PlayDict = plays.PlayDict    
 
 
@@ -16,6 +18,8 @@ class Game:
     def __init__(self,team_1=None, team_2=None, 
                   classifiers=None):
         
+        random.seed()
+        self.playcounts = {"Run":0,"Pass":0}
         self.team_1 = None
         self.team_2 = None
         self.game_classifiers = classifiers
@@ -39,6 +43,10 @@ class Game:
         self.turn_over_on_downs = False
         self.scored = False
         self.summary = []
+        self.n_neighbors = 6
+        self.R = data_ops.RunData('2013_nfl_pbp_through_wk_12.csv')
+        self.runX,self.runY = self.R.RunTrainData() 
+        self.knn = learn.learnKNN(self.runX, self.runY,self.n_neighbors)
     
     def isEndState(self,TIME):
         if self.quarter > 4:# and self.time_left_this_quarter <= 0:
@@ -48,20 +56,26 @@ class Game:
               self.winner = self.D
            else:
               self.winner = 'TIE'
-           print self.winner 
-           print self.O.score, self.D.score
+           #print self.winner 
+           #print self.playcounts, self.O.team_name,self.O.score,self.D.team_name,self.D.score
            return True
         else:
            return False
         
-    def executePlay(self,PLAY, TIME):
-        # random.seed()
+    def executePlay(self,P, TIME):
         #time.sleep(0.3)
         # only the offense runs plays right now
         #determine the success of the play
         #determine which players were involved
         #determine defense and environment reponse/result and update game state
+        assert(self.down < 5)
+        PLAY = P[0]
         result = PlayDict[PLAY](self) 
+        if PLAY == 'Pass':
+           result = P[1]
+           self.playcounts['Pass']+=1
+        elif PLAY=='Run':
+           self.playcounts['Run']+=1
          
         s =self.O.team_name+": Down: " +str(self.down)\
             + ", BALL ON: "+str(self.yardline)\
@@ -99,7 +113,7 @@ class Game:
              self.yardline = 100
         elif PLAY == 'Punt':
              self.summary.append(self.O.team_name+" Punted.")
-             self.down += 1
+             self.down +=0
              self.switchOffense = True
              self.yardline = 100
         elif PLAY == 'Pass' or PLAY == 'Run': 
@@ -120,6 +134,9 @@ class Game:
              self.summary.append(self.O.team_name+" Returned punt for "+str(result))
              self.updateYardline(result)
              self.down = 1
+        else:
+            print "Play not processed: "+str(PLAY) 
+            assert(False) 
               
 
     def updateTime(self, result, PLAY):
@@ -129,7 +146,6 @@ class Game:
         self.time_left_this_quarter -= 30
         self.time_left_this_game -= 30
         if self.time_left_this_quarter <= 0:
-           print self.quarter
            self.time_left_this_quarter = 900
            self.quarter +=1
 
@@ -167,7 +183,26 @@ class Game:
            
     def updateYardline(self, result):
        self.yardline -= result
+
      
+    #[0,0,0,0]
+    def getTimeFeaturesFromGame(self): 
+        t = self.time_left_this_game/60
+        tms = []
+        if self.quarter <= 2:
+           tms+= [1,0]
+        else:
+           tms+= [0,1]
+        if self.quarter == 2 and self.time_left_this_quarter < 180:
+              tms.append(1)
+        else:
+              tms.append(0)
+        if self.quarter == 4 and  self.time_left_this_quarter < 300:
+             tms.append(1)
+        else:
+             tms.append(0)
+        return tms
+
 
 #check for safety
 
