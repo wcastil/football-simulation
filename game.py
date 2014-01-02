@@ -1,4 +1,5 @@
 """
+Game class simulates football game.
 """
 import copy
 import os

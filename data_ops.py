@@ -164,14 +164,14 @@ class PassData(FootballData):
              for tm in teams:
                  tm = re.search('[A-Z]{2,3}',tm).group(0)
                  QBs = map(str,rosters[tm]['QB'])
-                 Xall += self.getPassPlays(getReader(fname), tm, QBs)
+                 Xall += self.getPassPlays(getReader(fname), tm, QBs, 'R.Gronkowski')
              StoreAsJSON(outfilename, Xall)
           else:
              Xall = GetFromJSON(outfilename)
           return Xall 
 
           
-      def getPassPlays(self, r, tm, QBs):
+      def getPassPlays(self, r, tm, QBs, remove_players=None):
           QBplays = [] 
           OtherPlays = []
           for row in r:
@@ -180,7 +180,9 @@ class PassData(FootballData):
 #                 for qb in QBname:
                   #doing this for team passing right now
                   if 'pass' in play[11] and 'TWO-POINT' not in play[11]:
-                      QBplays.append(self.extractPassFeatures(play))
+                      if remove_players is not None:
+                         if remove_players not in play[11]:
+                             QBplays.append(self.extractPassFeatures(play))
                   else:
                       OtherPlays.append(play)
           return QBplays
