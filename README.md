@@ -2,6 +2,8 @@ football-simulation
 ===================
 Code requires scikit library and python 2.7
 
+*Scrape weekly data with scripts in ruby_code
+
 Quick summary:
 Simulate.py has the code for specifying the simulation,prints number of games won by each team
 Game simulation is in game.py
