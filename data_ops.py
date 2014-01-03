@@ -187,6 +187,7 @@ class PassData(FootballData):
                       OtherPlays.append(play)
           return QBplays
 
+#-- [time features in first 4][down]=4%, to go = 11%, ydline=23%, scorediff=18%,series1stdown=18% , eff=10, peff=10
       def extractPassFeatures(self,p): 
             if 'pass' in p[11] and 'TWO-POINT' not in p[11]:
               yards = re.search('for\s([0-9]+)\syards', p[11])
